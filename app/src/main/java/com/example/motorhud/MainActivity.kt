@@ -32,6 +32,7 @@ data class NavStep(
 
 class MainActivity : AppCompatActivity() {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
+    private lateinit var sentTextView: TextView
     private val LOCATION_PERMISSION_REQUEST_CODE = 1000
     private val deviceName = "ESP32_HUD"
     private val uuid: UUID = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb")
@@ -64,6 +65,8 @@ class MainActivity : AppCompatActivity() {
         val getLocationButton = findViewById<Button>(R.id.getLocationButton)
         val directionsText = findViewById<TextView>(R.id.directionsText)
 
+        sentTextView = findViewById(R.id.sentTextView)
+
         getLocationButton.setOnClickListener {
             val destinationAddress = destinationInput.text.toString()
 
@@ -82,7 +85,7 @@ class MainActivity : AppCompatActivity() {
                     LOCATION_PERMISSION_REQUEST_CODE
                 )
             } else {
-                fusedLocationClientw.lastLocation.addOnSuccessListener { location: Location? ->
+                fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
                     if (location != null) {
                         getLatLngFromAddress(destinationAddress) { destLat, destLon ->
                             destinationLat = destLat
@@ -118,7 +121,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun getLatLngFromAddress(address: String, callback: (lat: Double, lon: Double) -> Unit) {
-        val apiKey = "API_Key"
+        val apiKey = ""
         val url = "https://maps.googleapis.com/maps/api/geocode/json" +
                 "?address=${address.replace(" ", "+")}&key=$apiKey"
         Log.d("GEOCODE_URL", url)
@@ -158,7 +161,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun getDirections(originLat: Double, originLon: Double) {
-        val apiKey = "API_Key"
+        val apiKey = ""
         val url = "https://maps.googleapis.com/maps/api/directions/json" +
                 "?origin=$originLat,$originLon" +
                 "&destination=$destinationLat,$destinationLon" +
@@ -193,6 +196,9 @@ class MainActivity : AppCompatActivity() {
                 try {
                     outputStream?.write((navMessage + "\n").toByteArray())
                     Log.d("NAV", "Sent: $navMessage")
+                    runOnUiThread {
+                        sentTextView.text = "Sent: $navMessage"
+                    }
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
