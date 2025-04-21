@@ -1,49 +1,57 @@
+#include <algorithm>            // for std::min
 #include "BluetoothSerial.h"
 #include <U8g2lib.h>
 #include <SPI.h>
 
-// Creating bluetooth objects
+// Bluetooth & Display setup
 BluetoothSerial SerialBT;
+U8G2_SH1106_128X64_NONAME_F_4W_HW_SPI u8g2(
+  U8G2_MIRROR,   // <‑‑ horizontal mirror for helmet reflection
+  /* cs=*/ 5,
+  /* dc=*/ 17,
+  /* reset=*/ 16
+);
 
-// SH1106, 128x64, SPI mode with full buffer (hardware SPI)
-U8G2_SH1106_128X64_NONAME_F_4W_HW_SPI u8g2(U8G2_R0, /* cs=*/ 5, /* dc=*/ 17, /* reset=*/ 16);
-
-
-void setup(){
-  // Starts connection with USB
+void setup() {
   Serial.begin(115200);
   u8g2.begin();
-  u8g2.clearBuffer();
   u8g2.setFont(u8g2_font_ncenB08_tr);
-  // Starts Bluetooth connection
   SerialBT.begin("ESP32_HUD");
   Serial.println("Connection established");
-
-
-
 }
 
-void loop(){
-  if (SerialBT.available()){
-    String phone_message = SerialBT.readString();
-    Serial.println(phone_message);
-    u8g2.clearBuffer();
-    int maxPerLine = 18;
+void loop() {
+  // 1) Read from Bluetooth if available
+  if (SerialBT.available()) {
+    String msg = SerialBT.readStringUntil('\n');
+    msg.trim();  // remove trailing \r or spaces
 
-    String line1 = phone_message.substring(0, min(maxPerLine, (int)phone_message.length()));
-    String line2 = (phone_message.length() > maxPerLine) ? phone_message.substring(maxPerLine) : "";
+    // 2) Split into up to 3 lines of max 18 chars each
+    const int maxChars = 18;
+    String line1 = msg.substring(0, std::min<int>(maxChars, msg.length()));
+    String line2 = "";
+    String line3 = "";
 
-    u8g2.drawStr(0, 16, line1.c_str());  // First line
-    if (line2.length() > 0) {
-      u8g2.drawStr(0, 32, line2.c_str());  // Second line
+    if (msg.length() > maxChars) {
+      int end2 = std::min<int>(2 * maxChars, msg.length());
+      line2 = msg.substring(maxChars, end2);
+      if (msg.length() > 2 * maxChars) {
+        line3 = msg.substring(2 * maxChars);
+      }
     }
+
+    // 3) Draw all three lines
+    u8g2.clearBuffer();
+    u8g2.drawStr(0, 16, line1.c_str());
+    u8g2.drawStr(0, 32, line2.c_str());
+    u8g2.drawStr(0, 48, line3.c_str());
     u8g2.sendBuffer();
   }
 
-  if (Serial.available()){
+  // 4) (Optional) Mirror PC serial to Bluetooth
+  if (Serial.available()) {
     String PC_message = Serial.readStringUntil('\n');
     Serial.println("PC: " + PC_message);
     SerialBT.println(PC_message);
   }
-
 }
