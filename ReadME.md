@@ -76,13 +76,23 @@ Android App (GPS + Directions API)
 
 ---
 
-## 🪖 Helmet Integration (Coming Soon)
+## 🪖 Helmet Integration
 
-A CAD file will be added to this repository demonstrating how the MotorHUD system is integrated into a motorcycle helmet.  
-It includes a **transparent lens** for clear visual feedback while riding, ensuring both safety and usability.  
+This repository includes 3D CAD files for integrating the MotorHUD system into a motorcycle helmet.
 
-Stay tuned for `.f3d` / `.step` design files and 3D-print-ready components!
+### 📁 Included Files:
+| File Name              | Description                                     | Format   |
+|------------------------|-------------------------------------------------|----------|
+| `case.stl`             | Case that holds the esp32 and the powerbank     | `.stl`   |
+| `dsiplay_cover`        | cover for the oled display to mount onto helmet | `.stl`  |
+| `lid.stl`              | Lid for the cover                               | `.stl`   |
 
+> 🛠️ These parts are designed to be 3D printed and assembled onto a helmet with a standard visor clip. The transparent lens is angled for optimal readability while minimizing rider distraction.
+
+### 🧪 Tips for Assembly:
+- Print parts using durable filament like **ABS** for outdoor/weather resistance.
+- Use small zipties to fasten display to display_cover.
+- Cable routing can be secured using the grooves in the ESP32 case.
 ---
 
 ## 🔧 Installation & Build
