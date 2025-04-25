@@ -15,7 +15,12 @@
 - 📱 Custom Android frontend with live instruction feedback
 - 🪛 Helmet integration design (coming soon via CAD)
 
-![MotorHud POV](images/POV.jpg)
+<p align="center">
+  <img src="images/POV.jpg" alt="Front View" width="30%" />
+  <img src="images/components.jpg" alt="Side View" width="30%" />
+  <img src="images/display.jpg" alt="Back View" width="30%" />
+</p>
+
 ---
 
 ## 📷 Project Architecture
