@@ -16,9 +16,9 @@
 - 🪛 Helmet integration design (coming soon via CAD)
 
 <p align="center">
-  <img src="images/POV.jpg" alt="Front View" width="30%" />
   <img src="images/components.jpg" alt="Side View" width="30%" />
   <img src="images/display.jpg" alt="Back View" width="30%" />
+  <img src="images/POV.jpg" alt="Front View" width="30%" />
 </p>
 
 ---
