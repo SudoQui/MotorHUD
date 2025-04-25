@@ -15,7 +15,7 @@
 - 📱 Custom Android frontend with live instruction feedback
 - 🪛 Helmet integration design (coming soon via CAD)
 
-(images/POV/jpg)
+![Helmet POV](images/POV/jpg)
 ---
 
 ## 📷 Project Architecture
