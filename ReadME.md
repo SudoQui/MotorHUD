@@ -1,147 +1,219 @@
-
+# README.md
 # 🏍️ MotorHUD
 
-**MotorHUD** is an intelligent Heads-Up Display (HUD) system for motorcycles. It features a custom Android app that retrieves real-time GPS location, calculates turn-by-turn navigation using the Google Directions API, and sends the next instruction to an ESP32 over Bluetooth. The ESP32 then displays the directions on a compact 1.3" OLED screen.
+MotorHUD puts the next turn and the current speed zone inside your helmet so your eyes stay on the road.  
+This repo covers the helmet side. It includes the ESP32 hub firmware, a simple companion app starter, and printable case parts. The speed-sign vision stack now lives in a separate repo named **SudoSpeed**.
 
 ---
 
-## 🚀 Features
+## What is new in this phase
 
-- 📍 Real-time GPS tracking via Android phone
-- 🗺️ Turn-by-turn navigation using Google Maps Directions API
-- 🔄 Automatic direction updates every 5 seconds
-- 📡 Bluetooth communication with ESP32
-- 🖥️ Minimalist HUD using a 128x64 SPI OLED Display
-- 📱 Custom Android frontend with live instruction feedback
-- 🪛 Helmet integration design (coming soon via CAD)
+**Transparent OLEDs**  
+The display has moved to transparent OLEDs for better helmet integration and less visual bulk. Rendering is minimal and high contrast for quick glances.
 
-<p align="center">
-  <img src="images/components.jpg" alt="Side View" width="30%" />
-  <img src="images/display.jpg" alt="Back View" width="30%" />
-  <img src="images/POV.jpg" alt="Front View" width="30%" />
-</p>
+**SudoSpeed integration**  
+MotorHUD now listens for zone updates from SudoSpeed running on a Raspberry Pi or laptop. SudoSpeed emits lines like `Z:60` and the ESP32 shows the current zone on the right display.
+
+**New navigation retrieval**  
+The companion app now owns routing and re-routing. It pulls Directions from Google, reduces them to the single next instruction, and sends only that short line to the ESP32 over BLE. This keeps Bluetooth traffic light and updates smooth every few seconds.
 
 ---
 
-## 📷 Project Architecture
+## Repo layout
 
-```plaintext
-Android App (GPS + Directions API)
-    ↳ Bluetooth
-        ↳ ESP32
-            ↳ OLED HUD Display
+Your current structure is kept simple.
+
+```
+Companion App/            Android starter for BLE and Directions
+images/                   All images go here
+Case.stl                  ESP32 and powerbank case
+display_cover v1.stl      Display cover and helmet mount
+Lid v1.stl                Lid for the cover
+Esp32_code.cpp            ESP32 main firmware file
+SudoSpeed.py              Helper or bridge code when needed
+ReadME.md                 This README
+LICENSE                   MIT license
 ```
 
 ---
 
-## 📱 Android App
+## How MotorHUD works
 
-### Key Technologies:
-- Kotlin
-- Google Play Services Location API
-- Google Directions API
-- Bluetooth Adapter API
+```
+Phone Companion App → BLE text "NAV:<instruction>"
+SudoSpeed on Pi or laptop → Classic BT SPP text "Z:<kph>"
+ESP32 hub receives both → draws Navigation on left OLED and Zone on right OLED
+Transparent OLEDs inside the helmet visor show the info with minimal clutter
+```
 
-### Features:
-- "MotorHUD" header with logo
-- Editable destination input
-- Displays live instruction being sent to ESP32
-- Automatic re-routing on wrong turns
-
-### Setup:
-1. Enable location permissions
-2. Set your Google Directions API key
-3. Pair your ESP32 over Bluetooth
-4. Tap start to begin navigation
+Typical messages  
+* From phone: `NAV:Turn left onto Hurley Street`  
+* From SudoSpeed: `Z:60`
 
 ---
 
-## 🧠 ESP32 Firmware
+## Hardware overview
 
-### Key Technologies:
-- Arduino (C++)
-- U8g2 Library for OLED rendering
-- Bluetooth Serial (BT Classic)
-- SPI Communication
+**Displays**  
+Two 128×64 OLEDs. You can use transparent SSD1306-compatible panels on shared SPI.
 
-### Features:
-- Displays up to **3 lines** of text
-- Parses incoming Bluetooth instructions
-- Refreshes display on every update
+**Power**  
+Small USB battery bank or bike power with a 5 V regulator and inline fuse.
 
-### Wiring:
-| OLED Pin | ESP32 Pin |
-|----------|-----------|
-| VCC      | 3.3V      |
-| GND      | GND       |
-| SCL      | 18        |
-| SDA      | 23        |
-| RES      | 16        |
-| DC       | 17        |
-| CS       | 5         |
+**Pins**  
+You will update the final diagram. Use the table below as a starting point.
+
+| Signal | ESP32 pin |
+|-------:|:----------|
+| SCLK   | 18        |
+| MOSI   | 23        |
+| MISO   | 19        |
+| DC     | 16        |
+| RST    | 4         |
+| CS Left| 5         |
+| CS Right| 17       |
+| VCC    | 3V3       |
+| GND    | GND       |
+
+Upload your new diagram later as `images/pin_diagram_v2.png` and reference it here.
 
 ---
 
-## 🪖 Helmet Integration
+## Part A. ESP32 firmware
 
-This repository includes 3D CAD files for integrating the MotorHUD system into a motorcycle helmet.
+**File**  
+`Esp32_code.cpp`
 
-### 📁 Included Files:
-| File Name              | Description                                     | Format   |
-|------------------------|-------------------------------------------------|----------|
-| `case.stl`             | Case that holds the esp32 and the powerbank     | `.stl`   |
-| `dsiplay_cover`        | cover for the oled display to mount onto helmet | `.stl`  |
-| `lid.stl`              | Lid for the cover                               | `.stl`   |
+**Build steps**  
+1. Arduino IDE or PlatformIO  
+2. Boards Manager install ESP32  
+3. Libraries  
+   * Adafruit GFX  
+   * Adafruit SSD1306  
+   * BluetoothSerial  
+   * NimBLE-Arduino for BLE UART  
+4. Flash to the board and open Serial Monitor
 
-> 🛠️ These parts are designed to be 3D printed and assembled onto a helmet with a standard visor clip. The transparent lens is angled for optimal readability while minimizing rider distraction.
+**First run**  
+The screens show waiting text. The device advertises as `ESP32-SUDOSPEED` for Classic BT and a BLE UART name for the phone. When a line arrives that starts with `NAV:` or `Z:` the display updates immediately.
 
-### 🧪 Tips for Assembly:
-- Print parts using durable filament like **ABS** for outdoor/weather resistance.
-- Use small zipties to fasten display to display_cover.
-- Cable routing can be secured using the grooves in the ESP32 case.
 ---
 
-## 🔧 Installation & Build
+## Part B. SudoSpeed link on Raspberry Pi
 
-### Android App:
+**Goal**  
+Run SudoSpeed and forward zone updates to the ESP32.
+
+**Steps**  
+1. Pair the Pi with the ESP32 over Classic Bluetooth SPP  
+2. Run SudoSpeed with your camera or a test clip  
+3. Pipe lines that start with `Z:` to the SPP device
+
+Example relay
+
+```python
+# relay_z_to_spp.py
+import serial, sys
+ser = serial.Serial("/dev/rfcomm0", 115200, timeout=1)
+for line in sys.stdin:
+    if line.startswith("Z:"):
+        ser.write((line.strip() + "\n").encode("utf-8"))
+```
+
+Run
+
 ```bash
-Android Studio → Open Project → Run on Device
+python3 run_speed_reader.py --source 0 --det detect.onnx --rec classify.onnx |
+python3 relay_z_to_spp.py
 ```
 
-### ESP32 Firmware:
-1. Flash via Arduino IDE or PlatformIO
-2. Select correct COM port
-3. Libraries needed:
-   - `U8g2`
-   - `BluetoothSerial`
+You can also keep a helper in `SudoSpeed.py` if you prefer a single entry point.
 
 ---
 
-## ✅ To-Do / Roadmap
+## Part C. Companion App
 
-- [x] ESP32 OLED 3-line support
-- [x] Live Bluetooth updates
-- [x] Google Directions API integration
-- [ ] Add voice feedback option
-- [ ] Route history & analytics
-- [ ] HUD brightness adjustment
-- [ ] Upload CAD helmet design
+**Folder**  
+`Companion App/`
 
----
+**What it does**  
+Gets GPS from the phone, calls the Google Directions API, picks the single next instruction, and writes it over BLE as `NAV:<text>` every few seconds. If the rider takes a wrong turn the app re-routes and sends the new step.
 
-## 🧪 Demo
-
-https://user-images.githubusercontent.com/.../motorhud_demo.mp4 *(Insert your demo link here)*
+**Setup**  
+1. Open in Android Studio  
+2. Add your Directions API key  
+3. Grant location and Bluetooth permissions  
+4. Pair with the ESP32 and press Start
 
 ---
 
-## 🤝 Credits
+## Printing and assembly
 
-Made with ❤️ by Mustafa Siddiqui  
-Special thanks to the open-source communities supporting ESP32, Android Dev, and Google Maps APIs.
+**STLs**  
+`Case.stl`  
+`display_cover v1.stl`  
+`Lid v1.stl`
+
+**Tips**  
+* Print in ABS or PETG for heat and weather  
+* Use small zip ties or M2 screws to secure the transparent OLED into the cover  
+* Route cables through the case grooves and along the helmet edge  
+* Check visibility at night and in bright daylight before riding
 
 ---
 
-## 📜 License
+## Images
 
-MIT License – use freely, but attribution appreciated!
+Keep everything in the single images folder. You plan to add these later.
+
+```
+images/
+  helmet_inside.png
+  helmet_outside.png
+  pi_case_final.png
+  pin_diagram_v2.png
+```
+
+Add any extra photos with clear names. Reference them in this README using the same folder.
+
+---
+
+## Roadmap
+
+* Finalise transparent OLED mounts  
+* Auto-start SudoSpeed on boot with a systemd service  
+* BLE only transport for both NAV and Z if you decide to unify links  
+* Brightness and font size controls on the ESP32  
+* Optional voice prompt from the phone app
+
+---
+
+## Safety
+
+MotorHUD is a research and learning project. Always follow road rules and test safely off the road first.
+
+---
+
+## License
+
+MIT License
+
+Copyright (c) 2025 Mustafa Siddiqui
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files the “Software”, to deal
+in the Software without restriction, including without limitation the rights
+to use copy modify merge publish distribute sublicense and or sell copies of
+the Software and to permit persons to whom the Software is furnished to do so
+subject to the following conditions
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software
+
+THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM DAMAGES OR OTHER
+LIABILITY WHETHER IN AN ACTION OF CONTRACT TORT OR OTHERWISE ARISING FROM
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE
