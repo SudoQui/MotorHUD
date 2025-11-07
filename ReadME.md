@@ -1,8 +1,8 @@
 # 🏍️ MotorHUD
 
 <p align="center">
-  <img src="images/helmet_inside.png" alt="MotorHUD inside helmet" width="48%">
-  <img src="images/helmet_outside.png" alt="MotorHUD outside view" width="48%">
+  <img src="images/helmet_inside.jpg" alt="MotorHUD inside helmet" width="48%">
+  <img src="images/helmet_outside.jpg" alt="MotorHUD outside view" width="48%">
 </p>
 
 MotorHUD shows the next turn and the current speed zone inside the helmet so your eyes stay on the road.  
